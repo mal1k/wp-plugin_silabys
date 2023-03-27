@@ -28,5 +28,24 @@ jQuery(document).ready(function($) {
       $('#course4').show();
     }
   });
+  
+  if ($("directionSelect").val() !== 'Б'){
+    $('#course3').hide();
+    $('#course4').hide();
+  } else {
+    $('#course3').show();
+    $('#course4').show();
+  }
+
+  $('#directionSelect').change(function(){
+    // Do something interesting here
+    if (this.value !== 'Б') {
+      $('#course3').hide();
+      $('#course4').hide();
+    } else {
+      $('#course3').show();
+      $('#course4').show();
+    }
+  });
 
 });

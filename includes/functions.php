@@ -21,13 +21,39 @@ function myos_contacts_page_handler()
 
     <form id="contacts-table" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>"/>
+
+        <?php $table->search_box('Поиск', 'search_id'); ?>
+        
+        <label for="academic_year">Фільтр:</label>
+        <select class="mr-3" name="academic_year" id="academic_year">
+            <option selected>Академічний рік</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+        </select>
+
+        <select class="mr-3" name="direction" id="directionSelect">
+            <option selected>Напрямок</option>
+            <option value="Б">Б</option>
+            <option value="МП">МП</option>
+            <option value="МН">МН</option>
+            <option value="ДФ">ДФ</option>
+        </select>
+
+        <select class="mr-3" name="course" id="course">
+            <option selected>Курс</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option id="course3" value="3">3</option>
+            <option id="course4" value="4">4</option>
+        </select>
+
+        <?php submit_button( 'Застосувати фільтри', 'button', false, false, array('id' => 'search-submit') ); ?>
         <?php $table->display() ?>
     </form>
 
 </div>
 <?php
 }
-
 
 function myos_contacts_form_page_handler()
 {
