@@ -1,8 +1,8 @@
 <?php
 
 /**
- * Plugin Name: Сілабуси
- * Description: CRUD сілабусів для SCS KPI UA.
+ * Plugin Name: Силабуси
+ * Description: CRUD силабусів для SCS KPI UA.
  * Version: 1.1
  * Author: Котлярський Алекс
  * Author URI: https://t.me/alex_mal1k
@@ -17,19 +17,19 @@ defined( 'ABSPATH' ) or die( '¡Sin trampas!' );
 require plugin_dir_path( __FILE__ ) . 'includes/functions.php';
 
 function myos_custom_admin_styles() {
-    wp_enqueue_style('custom-styles', plugins_url('/css/styles.css', __FILE__ ));
-    wp_enqueue_style('custom-styles2', plugins_url('/css/bootstrap.css', __FILE__ ));
+    wp_enqueue_style('custom-styles', plugins_url('/assets/css/styles.css', __FILE__ ));
+    wp_enqueue_style('custom-styles2', plugins_url('/assets/css/bootstrap.css', __FILE__ ));
 }
 add_action('admin_enqueue_scripts', 'myos_custom_admin_styles');
 
 function load_custom_script() {
-    wp_enqueue_script('custom_js_script', plugins_url('/js/scripts.js', __FILE__), array('jquery'));
+    wp_enqueue_script('custom_js_script', plugins_url('/assets/js/scripts.js', __FILE__), array('jquery'));
 }
 add_action( 'admin_enqueue_scripts', 'load_custom_script' );
 
 
 function myos_plugin_load_textdomain() {
-load_plugin_textdomain( 'myos', false, basename( dirname( __FILE__ ) ) . '/languages' ); 
+    load_plugin_textdomain( 'myos', false, basename( dirname( __FILE__ ) ) . '/languages' ); 
 }
 add_action( 'plugins_loaded', 'myos_plugin_load_textdomain' );
 
@@ -48,7 +48,7 @@ function myos_install()
     $sql = "CREATE TABLE " . $table_name . " (
       id int(11) NOT NULL AUTO_INCREMENT,
       title varchar(255) NOT NULL, # назва
-      academic_year year NOT NULL, # рік
+      academic_year varchar(9) NOT NULL, # рік
       file_path varchar(255) NOT NULL, # шлях до файлу
       file_name varchar(255) NOT NULL, # назва файлу
       direction ENUM('Б', 'МП', 'МН', 'ДФ') NOT NULL, # назва напряму підготовки
@@ -132,8 +132,8 @@ class Custom_Table_Silabys_List_Table extends WP_List_Table
     {
 
         $actions = array(
-            'edit' => sprintf('<a href="?page=silabys_form&id=%s">%s</a>', $item['id'], __('Edit', 'silabys')),
-            'delete' => sprintf('<a href="?page=%s&action=delete&id=%s">%s</a>', $_REQUEST['page'], $item['id'], __('Delete', 'silabys')),
+            'edit' => sprintf('<a href="?page=silabys_form&id=%s">%s</a>', $item['id'], __('Редагувати', 'silabys')),
+            'delete' => sprintf('<a href="?page=%s&action=delete&id=%s">%s</a>', $_REQUEST['page'], $item['id'], __('Видалити', 'silabys')),
         );
 
         return sprintf('%s %s',
@@ -141,7 +141,6 @@ class Custom_Table_Silabys_List_Table extends WP_List_Table
             $this->row_actions($actions)
         );
     }
-
 
     function column_cb($item)
     {
@@ -160,11 +159,11 @@ class Custom_Table_Silabys_List_Table extends WP_List_Table
     {
         $columns = array(
             'cb' => '<input type="checkbox" />', 
-            'title' => __('Title', 'silabys'),
-            'academic_year' => __('Academic Year', 'silabys'),
-            'direction' => __('Direction', 'silabys'),
-            'course' => __('Course', 'silabys'),
-            'file_name' => __('File', 'silabys'),
+            'title' => __('Назва', 'silabys'),
+            'academic_year' => __('Академічний рік', 'silabys'),
+            'direction' => __('Напрямок', 'silabys'),
+            'course' => __('Курс', 'silabys'),
+            'file_name' => __('Назва файлу', 'silabys'),
         );
         return $columns;
     }
@@ -172,11 +171,11 @@ class Custom_Table_Silabys_List_Table extends WP_List_Table
     function get_sortable_columns()
     {
         $sortable_columns = array(
-            'title' => __('title', true),
-            'academic_year' => __('academic_year', true),
-            'direction' => __('direction', true),
-            'course' => __('course', true),
-            'file_name' => __('file_name', true),
+            // 'title' => __('title', true),
+            // 'academic_year' => __('academic_year', true),
+            // 'direction' => __('direction', true),
+            // 'course' => __('course', true),
+            // 'file_name' => __('file_name', true),
         );
         return $sortable_columns;
     }
@@ -184,7 +183,7 @@ class Custom_Table_Silabys_List_Table extends WP_List_Table
     function get_bulk_actions()
     {
         $actions = array(
-            'delete' => 'Delete'
+            'delete' => 'Видалити'
         );
         return $actions;
     }
@@ -221,13 +220,34 @@ class Custom_Table_Silabys_List_Table extends WP_List_Table
 
         $total_items = $wpdb->get_var("SELECT COUNT(id) FROM $table_name");
 
+        $academic_year = $_REQUEST['academic_year'];
+        $direction = $_REQUEST['direction'];
+        $course = $_REQUEST['course'];
+        $search = $_REQUEST['s'];
+
+        if ( !empty($search) )
+            $filters[] = "title = '$search' OR title = '$search' OR file_name = '$search' OR academic_year = '$search' OR direction = '$search' OR course = '$search'";
+
+        if ( !empty($academic_year) )
+            $filters[] = "academic_year = '$academic_year'";
+        
+        if ( !empty($direction) )
+            $filters[] = "direction = '$direction'";
+        
+        if ( !empty($course) )
+            $filters[] = "course = '$course'";
+
+        if ( !empty($filters) )
+            $filters = ' WHERE ' . implode(' AND ', $filters);
 
         $paged = isset($_REQUEST['paged']) ? max(0, intval($_REQUEST['paged']) - 1) : 0;
         $orderby = (isset($_REQUEST['orderby']) && in_array($_REQUEST['orderby'], array_keys($this->get_sortable_columns()))) ? $_REQUEST['orderby'] : 'id';
         $order = (isset($_REQUEST['order']) && in_array($_REQUEST['order'], array('asc', 'desc'))) ? $_REQUEST['order'] : 'desc';
 
+        // if ( !empty($filters) )
+        //     die($wpdb->prepare("SELECT * FROM $table_name $filters ORDER BY $orderby $order LIMIT %d OFFSET %d", $per_page, $paged));
 
-        $this->items = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name ORDER BY $orderby $order LIMIT %d OFFSET %d", $per_page, $paged), ARRAY_A);
+        $this->items = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name $filters ORDER BY $orderby $order LIMIT %d OFFSET %d", $per_page, $paged), ARRAY_A);
 
 
         $this->set_pagination_args(array(
@@ -240,10 +260,10 @@ class Custom_Table_Silabys_List_Table extends WP_List_Table
 
 function myos_admin_menu()
 {
-    add_menu_page(__('Silabys', 'myos'), __('Сілабуси', 'myos'), 'activate_plugins', 'silabys', 'myos_contacts_page_handler');
-    add_submenu_page('silabys', __('Сілабуси', 'myos'), __('Сілабуси', 'myos'), 'activate_plugins', 'silabys', 'myos_contacts_page_handler');
+    add_menu_page(__('Silabys', 'myos'), __('Силабуси', 'myos'), 'activate_plugins', 'silabys', 'myos_contacts_page_handler');
+    add_submenu_page('silabys', __('Силабуси', 'myos'), __('Силабуси', 'myos'), 'activate_plugins', 'silabys', 'myos_contacts_page_handler');
    
-    add_submenu_page('silabys', __('Додати сілабус', 'myos'), __('Додати сілабус', 'myos'), 'activate_plugins', 'silabys_form', 'myos_contacts_form_page_handler');
+    add_submenu_page('silabys', __('Додати силабус', 'myos'), __('Додати силабус', 'myos'), 'activate_plugins', 'silabys_form', 'myos_contacts_form_page_handler');
 }
 
 add_action('admin_menu', 'myos_admin_menu');
@@ -255,6 +275,7 @@ function myos_validate_contact($item)
 
     if (empty($item['title'])) $messages[] = __('Необхідно вказати назву', 'myos');
     if (empty($item['academic_year'])) $messages[] = __('Вкажіть навчальний рік', 'myos');
+    if ( !preg_match('/[0-9]{4}[-][0-9]{4}/', $item['academic_year']) ) $messages[] = __('Необхідно вказати навчальний рік в форматі XXXX-XXXX');    
     if (empty($item['direction'])) $messages[] = __('Необхідно вказати напрямок');
     if ($item['direction'] != 'Б' && (int)$item['course'] > 2 || empty($item['course'])) $messages[] = __('Необхідно вказати курс');
     if (!(bool)$item['file_path']) $messages[] = __('Файл обовʼязковий');

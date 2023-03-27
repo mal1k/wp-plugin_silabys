@@ -10,12 +10,12 @@ jQuery(document).ready(function($) {
     }
   });  
 
-  if ($("input[name='direction']:checked").val() !== 'Б'){
-    $('#course3').hide();
-    $('#course4').hide();
-  } else {
+  if ($("input[name='direction']:checked").val() == 'Б'){
     $('#course3').show();
     $('#course4').show();
+  } else {
+    $('#course3').hide();
+    $('#course4').hide();
   }
 
   $("input[name='direction']").change(function(){
@@ -30,21 +30,21 @@ jQuery(document).ready(function($) {
   });
   
   if ($("directionSelect").val() !== 'Б'){
-    $('#course3').hide();
-    $('#course4').hide();
+    $('#course3filter').hide();
+    $('#course4filter').hide();
   } else {
-    $('#course3').show();
-    $('#course4').show();
+    $('#course3filter').show();
+    $('#course4filter').show();
   }
 
   $('#directionSelect').change(function(){
     // Do something interesting here
     if (this.value !== 'Б') {
-      $('#course3').hide();
-      $('#course4').hide();
+      $('#course3filter').hide();
+      $('#course4filter').hide();
     } else {
-      $('#course3').show();
-      $('#course4').show();
+      $('#course3filter').show();
+      $('#course4filter').show();
     }
   });
 
