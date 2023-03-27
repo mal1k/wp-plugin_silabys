@@ -98,25 +98,31 @@ function myos_contacts_form_page_handler()
 
     // saving the form
     if ( isset($_REQUEST['nonce']) && wp_verify_nonce($_REQUEST['nonce'], basename(__FILE__))) {
-        if ( isset( $_FILES['file'] ) && $_FILES['file']['error'] == UPLOAD_ERR_OK ) {
+
+        if ( !empty( $_FILES['file']['size'] > 0 ) ) {
             $upload_dir = wp_upload_dir();
             $file_name = $_FILES['file']['name'];
             $file_tmp_name = $_FILES['file']['tmp_name'];
-            $file_dest_name = $upload_dir['path'] . '/' . $file_name;
-            move_uploaded_file( $file_tmp_name, $file_dest_name);
-            $_REQUEST['file_path'] = $upload_dir['subdir'] . '/' . $file_name;
+
+            if ( file_exists($upload_dir['path'] . '/' . $file_name) ) {
+                $file_name = time() . '_' . $file_name;
+                move_uploaded_file( $file_tmp_name, $upload_dir['path'] . '/' . $file_name);
+                $_REQUEST['file_path'] = $upload_dir['subdir'] . '/' . $file_name;
+            } else {
+                move_uploaded_file( $file_tmp_name, $upload_dir['path'] . '/' . $file_name);
+                $_REQUEST['file_path'] = $upload_dir['subdir'] . '/' . $file_name;
+            }
 
             if (empty($_REQUEST['file_name']))
-                $_REQUEST['file_name'] = pathinfo($file_name, PATHINFO_FILENAME);
+                $_REQUEST['file_name'] = pathinfo($_FILES['file']['name'], PATHINFO_FILENAME);
         }
 
         $item = shortcode_atts($default, $_REQUEST);
 
         $item_valid = myos_validate_contact($item);
 
-        // print_r($item);
-
         if ($item_valid === true) {
+            // creating
             if ($item['id'] == 0) {
                 $result = $wpdb->insert($table_name, $item);
                 $item['id'] = $wpdb->insert_id;
@@ -125,8 +131,13 @@ function myos_contacts_form_page_handler()
                 } else {
                     $notice = __('Під час збереження елемента сталася помилка', 'myos');
                 }
-            } else {
+            } else { # editing
                 try {
+                    $item_info = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $_REQUEST['id']), ARRAY_A);
+
+                    if ( !empty($_REQUEST['file_path']) && $item_info['file_path'] != $_REQUEST['file_path'] )
+                        unlink( $upload_dir['basedir'] . $item_info['file_path'] );
+
                     $result = $wpdb->update($table_name, $item, array('id' => $item['id']));
                 } catch (\Throwable $th) {
                     // code
@@ -134,9 +145,9 @@ function myos_contacts_form_page_handler()
                 if ($result) {
                     $message = __('Елемент успішно оновлено', 'myos');
                 } else {
+                    print_r($item);
                     $notice = __('Нічого не змінено', 'myos');
                 }
-                // $notice = __($result);
             }
         } else {
             $notice = $item_valid;
@@ -149,7 +160,7 @@ function myos_contacts_form_page_handler()
             $item = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $_REQUEST['id']), ARRAY_A);
             if (!$item) {
                 $item = $default;
-                $notice = __('Item not found', 'myos');
+                $notice = __('Елемент не знайдено', 'myos');
             }
         }
     }

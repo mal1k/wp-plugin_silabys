@@ -190,3 +190,6 @@ label span:before {
     align-items: center;
     padding: 20px;
 }
+.fileNotRemoved {
+    color: tomato;
+}

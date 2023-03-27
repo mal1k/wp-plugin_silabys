@@ -111,7 +111,7 @@ if (!class_exists('WP_List_Table')) {
 
 
 class Custom_Table_Silabys_List_Table extends WP_List_Table
- { 
+{ 
     function __construct()
     {
         global $status, $page;
@@ -194,8 +194,28 @@ class Custom_Table_Silabys_List_Table extends WP_List_Table
         $table_name = $wpdb->prefix . 'silabys'; 
 
         if ('delete' === $this->current_action()) {
+            $upload_dir = wp_upload_dir();
             $ids = isset($_REQUEST['id']) ? $_REQUEST['id'] : array();
             if (is_array($ids)) $ids = implode(',', $ids);
+
+            # only for modal remove
+            $silabys_info = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE id IN ($ids)"));
+
+            foreach ( $silabys_info as $single_silabys ) {
+                $file = $upload_dir['basedir'] . $single_silabys->file_path;
+                if ( is_file($file) && unlink($file) )
+                    print_r(unlink($file));
+                else
+                    $filesNotRemoved[] = $single_silabys->file_path;
+            }
+
+            if ( !empty($filesNotRemoved) ) {
+                echo '<h3 class="fileNotRemoved">Файли не вилучено:</h3>';
+                echo '<ol>';
+                foreach ($filesNotRemoved as $file)
+                    echo "<li class='fileNotRemoved'>$file</li>";
+                echo '</ol>';
+            }
 
             if (!empty($ids)) {
                 $wpdb->query("DELETE FROM $table_name WHERE id IN($ids)");
@@ -248,7 +268,6 @@ class Custom_Table_Silabys_List_Table extends WP_List_Table
         //     die($wpdb->prepare("SELECT * FROM $table_name $filters ORDER BY $orderby $order LIMIT %d OFFSET %d", $per_page, $paged));
 
         $this->items = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name $filters ORDER BY $orderby $order LIMIT %d OFFSET %d", $per_page, $paged), ARRAY_A);
-
 
         $this->set_pagination_args(array(
             'total_items' => $total_items, 
