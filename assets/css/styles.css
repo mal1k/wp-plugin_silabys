@@ -57,6 +57,22 @@ div.form3bc input {
     height: 40px;
     line-height: 40px;
 }
+.file-upload .file-select .file-import-button {
+    right: 0;
+    position: absolute;
+    background: #417bd3;
+    padding: 0 10px;
+    display: none;
+    height: 40px;
+    line-height: 40px;
+    color: white;
+    border: 0;
+    cursor: pointer;
+}
+.file-upload.active .file-select .file-import-button {
+    display: inline-block;
+    z-index: 999;
+}
 .file-upload .file-select .file-select-name {
     color: #787c82;
     line-height: 40px;
@@ -192,4 +208,16 @@ label span:before {
 }
 .fileNotRemoved {
     color: tomato;
+}
+.infoImportMessage {
+    background: white;
+    max-height: 500px;
+    overflow: auto;
+    border-radius: 5px;
+    border: 1px solid #1d232733;
+}
+.infoImportText {
+    color: red;
+    font-size: 14px;
+    margin-bottom: 0;
 }

@@ -15,6 +15,7 @@
 defined( 'ABSPATH' ) or die( '¡Sin trampas!' );
 
 require plugin_dir_path( __FILE__ ) . 'includes/functions.php';
+require plugin_dir_path( __FILE__ ) . 'includes/ZIPimport_silabys.php';
 
 function myos_custom_admin_styles() {
     wp_enqueue_style('custom-styles', plugins_url('/assets/css/styles.css', __FILE__ ));
@@ -283,6 +284,7 @@ function myos_admin_menu()
     add_submenu_page('silabys', __('Силабуси', 'myos'), __('Силабуси', 'myos'), 'activate_plugins', 'silabys', 'myos_contacts_page_handler');
    
     add_submenu_page('silabys', __('Додати силабус', 'myos'), __('Додати силабус', 'myos'), 'activate_plugins', 'silabys_form', 'myos_contacts_form_page_handler');
+    add_submenu_page('silabys', __('Мульті-додавання силабусів', 'myos'), __('Додати за допомогою архіву', 'myos'), 'activate_plugins', 'silabys_import', 'ZIPimport_silabys');
 }
 
 add_action('admin_menu', 'myos_admin_menu');

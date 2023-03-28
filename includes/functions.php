@@ -13,7 +13,6 @@ function myos_contacts_page_handler()
     ?>
     <div class="wrap">
 
-        <div class="icon32 icon32-posts-post" id="icon-edit"><br></div>
         <h2><?php _e('Силабуси', 'myos')?> <a class="add-new-h2"
                                     href="<?php echo get_admin_url(get_current_blog_id(), 'admin.php?page=silabys_form');?>"><?php _e('Додати силабус', 'myos')?></a>
         </h2>
@@ -170,7 +169,6 @@ function myos_contacts_form_page_handler()
 
     ?>
     <div class="wrap">
-        <div class="icon32 icon32-posts-post" id="icon-edit"><br></div>
         <h2><?php _e('Додати силабус', 'myos')?> <a class="add-new-h2"
                                     href="<?php echo get_admin_url(get_current_blog_id(), 'admin.php?page=silabys');?>"><?php _e('Назад до силабусів', 'myos')?></a>
         </h2>
