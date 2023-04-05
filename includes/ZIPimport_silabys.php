@@ -43,6 +43,8 @@ function ZIPimport_silabys() {
                 // Открываем zip-архив
                 $zip = new ZipArchive;
                 if ( $zip->open( $zip_file ) === true ) {        
+                    $ignoredFolders = array();
+                    $fileChanged    = array();
                     // Обходим все файлы и папки внутри архива
                     for ( $i = 0; $i < $zip->numFiles; $i++ ) {
                         // Имя файла или папки
@@ -68,28 +70,96 @@ function ZIPimport_silabys() {
                                 continue;
                             }
 
+                            $upload_dir = wp_upload_dir();
+                            $dir = $upload_dir['basedir'] . '/' . 'silabys/';
+
                             if ( !preg_match('/[0-9]{4}[-][0-9]{4}/', $year) ) { // пошук року
-                                $ignoredFolders[] = $year;
+                                $dir = $dir . $year;
+                                $files = scandir($dir);
+
+                                foreach ($files as $file) {
+                                    if ($file !== '.' && $file !== '..' && !in_array($file, $ignore_elements)) { // пропускаємо посилання на поточну, батьківську папки та ігнор файли
+                                        $path = $dir . '/' . $file;
+                                        if (is_file($path)) { // перевіряємо, чи є елемент файлом
+                                            $ignoredFolders[] = '<b>Рік</b>: ' . $year;
+                                            break;
+                                        }
+                                    }
+                                }
+
                                 continue;
                             }
                             elseif ( !array_key_exists($direction, $includedParts) ) { // пошук напрямку
-                                $ignoredFolders[] = $year . '/' . $direction;
+                                $dir = $dir . $year . '/' . $direction;
+                                $files = scandir($dir);
+
+                                foreach ($files as $file) {
+                                    if ($file !== '.' && $file !== '..' && !in_array($file, $ignore_elements)) { // пропускаємо посилання на поточну, батьківську папки та ігнор файли
+                                        $path = $dir . '/' . $file;
+                                        if (is_file($path)) { // перевіряємо, чи є елемент файлом
+                                            $directionName = !empty($direction) ? '/' . $direction : '/{файли}';
+                                            $ignoredFolders[] = '<b>Напрямок</b>: ' . $year . $directionName;
+                                            break;
+                                        }
+                                    }
+                                }
+
                                 continue;
                             }
                             elseif ( empty((int)$course) || $includedParts[$direction] < $course ) { // пошук курсу
-                                $ignoredFolders[] = $year . '/' . $direction . '/' . $course;
+                                $dir = $dir . $year . '/' . $direction . '/' . $course;
+                                $files = scandir($dir);
+
+                                foreach ($files as $file) {
+                                    if ($file !== '.' && $file !== '..' && !in_array($file, $ignore_elements)) { // пропускаємо посилання на поточну, батьківську папки та ігнор файли
+                                        $path = $dir . '/' . $file;
+                                        if (is_file($path)) { // перевіряємо, чи є елемент файлом
+                                            $courseName = !empty($course) ? '/' . $course : '/{файли}';
+                                            $ignoredFolders[] = '<b>Курс</b>: ' . $year . '/' . $direction . $courseName;
+                                            break;
+                                        }
+                                    }
+                                }
                                 continue;
                             }
         
-                            $index = $zip->locateName($name, ZipArchive::FL_NOCASE); // ищем индекс файла по пути
+                            $index = $zip->locateName($name, ZipArchive::FL_NOCASE); // шукаємо індекс файлу по дорозі
                             if ($index !== false) {
                                 $upload_dir = wp_upload_dir();
-                                $fileInfo = $zip->statIndex($index); // получаем информацию о файле по индексу
+                                $fileInfo = $zip->statIndex($index); // отримуємо інформацію про файл за індексом
         
                                 if (file_exists($upload_dir['basedir'] . '/' . $fileInfo['name']))
                                     $fileChanged[] = $fileInfo['name'];
         
-                                $zip->extractTo($upload_dir['basedir'], $fileInfo['name']);
+                                $zip->extractTo($upload_dir['basedir'], $fileInfo['name']); // записуємо файл у uploads
+                                
+                                global $wpdb;
+                                $table_name = $wpdb->prefix . 'silabys';
+                                $fileName = pathinfo($fileInfo['name'], PATHINFO_FILENAME);
+                                $item = [
+                                    'title'         => $fileName,
+                                    'academic_year' => $year,
+                                    'direction'     => $direction,
+                                    'course'        => $course,
+                                    'file_path'     => '/'.$fileInfo['name'],
+                                    'file_name'     => $fileName
+                                ];
+
+                                $silabys_info = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE 
+                                    title = '$fileName' AND
+                                    academic_year = '$year' AND
+                                    direction = '$direction' AND
+                                    course = '$course'"
+                                ), ARRAY_A); // шукаємо у бд
+
+                                if ( !empty($silabys_info) ) {
+                                    $silabys_id = $silabys_info['id'];
+                                    $wpdb->update($table_name, $item, array('id' => $silabys_id));
+                                }
+                                else {
+                                    $wpdb->insert($table_name, $item); // записуємо файл у бд
+                                }
+
                             }
         
         
@@ -102,34 +172,34 @@ function ZIPimport_silabys() {
                     ?>
 
                     <div class="row col">
-                        <?php if (!empty($fileChanged)): ?>
                         <div class="col-md">
-                            <p class="infoImportText">Замінені файли: </p>
-                            <div class="infoImportMessage">
-                                <ol>
-                                    <?php
-                                    foreach ($fileChanged as $file) {
-                                        echo '<li>' . $file . '</li>';
-                                    }
-                                    ?>
-                                </ol>
-                            </div>
+                            <?php if (!empty($fileChanged)): ?>
+                                <p class="infoImportText">Замінені файли: </p>
+                                <div class="infoImportMessage">
+                                    <ol>
+                                        <?php
+                                        foreach ($fileChanged as $file) {
+                                            echo '<li>' . $file . '</li>';
+                                        }
+                                        ?>
+                                    </ol>
+                                </div>
+                            <?php endif; ?>
                         </div>
-                        <?php endif; ?>
-                        <?php if (!empty($fileChanged)): ?>
                         <div class="col-md">
-                            <p class="infoImportText">Проігноровані папки: </p>
-                            <div class="infoImportMessage">
-                                <ol>
-                                    <?php
-                                    foreach ($ignoredFolders as $folder) {
-                                        echo '<li>' . $folder . '</li>';
-                                    }
-                                    ?>
-                                </ol>
-                            </div>
+                            <?php if (!empty($ignoredFolders)): ?>
+                                <p class="infoImportText">Проігноровані папки: </p>
+                                <div class="infoImportMessage">
+                                    <ol>
+                                        <?php
+                                        foreach ($ignoredFolders as $folder) {
+                                            echo '<li>' . $folder . '</li>';
+                                        }
+                                        ?>
+                                    </ol>
+                                </div>
+                            <?php endif; ?>
                         </div>
-                        <?php endif; ?>
                     </div>
                     
                     <?php

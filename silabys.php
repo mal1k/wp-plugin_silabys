@@ -15,7 +15,13 @@
 defined( 'ABSPATH' ) or die( '¡Sin trampas!' );
 
 require plugin_dir_path( __FILE__ ) . 'includes/functions.php';
+require plugin_dir_path( __FILE__ ) . 'includes/silabys_page.php';
 require plugin_dir_path( __FILE__ ) . 'includes/ZIPimport_silabys.php';
+
+function silabys_page_rewrite_rule() {
+    add_rewrite_rule( 'my-custom-page', 'index.php?silabys_page=1', 'top' );
+}
+add_action( 'init', 'silabys_page_rewrite_rule' );
 
 function myos_custom_admin_styles() {
     wp_enqueue_style('custom-styles', plugins_url('/assets/css/styles.css', __FILE__ ));
@@ -205,7 +211,7 @@ class Custom_Table_Silabys_List_Table extends WP_List_Table
             foreach ( $silabys_info as $single_silabys ) {
                 $file = $upload_dir['basedir'] . $single_silabys->file_path;
                 if ( is_file($file) && unlink($file) )
-                    print_r(unlink($file));
+                    unlink($file);
                 else
                     $filesNotRemoved[] = $single_silabys->file_path;
             }
@@ -300,6 +306,7 @@ function myos_validate_contact($item)
     if (empty($item['direction'])) $messages[] = __('Необхідно вказати напрямок');
     if ($item['direction'] != 'Б' && (int)$item['course'] > 2 || empty($item['course'])) $messages[] = __('Необхідно вказати курс');
     if (!(bool)$item['file_path']) $messages[] = __('Файл обовʼязковий');
+    if (empty($item['file_name'])) $messages[] = __('Назва файлу обовʼязкова');
     
     if (empty($messages)) return true;
     return implode('<br />', $messages);

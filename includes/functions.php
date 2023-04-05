@@ -33,8 +33,6 @@ function myos_contacts_page_handler()
             $academic_years = array_unique($academic_years);
             rsort($academic_years);
 
-            // if ($table->total_items > 0):
-            // print_r($table);
             if (!empty($table->_pagination_args['total_items'])): ?>
                 <h4 class="mb-0">Фільтр:</h4>
                 <select class="mr-3" name="academic_year" id="academic_year">
@@ -97,30 +95,34 @@ function myos_contacts_form_page_handler()
 
     // saving the form
     if ( isset($_REQUEST['nonce']) && wp_verify_nonce($_REQUEST['nonce'], basename(__FILE__))) {
-
+        // prepare file import
         if ( !empty( $_FILES['file']['size'] > 0 ) ) {
             $upload_dir = wp_upload_dir();
             $file_name = $_FILES['file']['name'];
             $file_tmp_name = $_FILES['file']['tmp_name'];
+            $dir_route = '/silabys/' . $_REQUEST['academic_year'] . '/' . $_REQUEST['direction'] . '/' . $_REQUEST['course'] . '/';
+            $file_route = $dir_route . $file_name;
 
-            if ( file_exists($upload_dir['path'] . '/' . $file_name) ) {
+            if ( file_exists($upload_dir['basedir'] . $file_route) ) {
                 $file_name = time() . '_' . $file_name;
-                move_uploaded_file( $file_tmp_name, $upload_dir['path'] . '/' . $file_name);
-                $_REQUEST['file_path'] = $upload_dir['subdir'] . '/' . $file_name;
-            } else {
-                move_uploaded_file( $file_tmp_name, $upload_dir['path'] . '/' . $file_name);
-                $_REQUEST['file_path'] = $upload_dir['subdir'] . '/' . $file_name;
+                $file_route = $dir_route . $file_name;
             }
+
+            $import_file_to_dir = $upload_dir['basedir'] . $file_route;
+
+            $_REQUEST['file_path'] = $file_route;
 
             if (empty($_REQUEST['file_name']))
                 $_REQUEST['file_name'] = pathinfo($_FILES['file']['name'], PATHINFO_FILENAME);
         }
 
         $item = shortcode_atts($default, $_REQUEST);
-
         $item_valid = myos_validate_contact($item);
 
         if ($item_valid === true) {
+            // import file
+            move_uploaded_file( $file_tmp_name, $import_file_to_dir);
+
             // creating
             if ($item['id'] == 0) {
                 $result = $wpdb->insert($table_name, $item);
@@ -144,7 +146,6 @@ function myos_contacts_form_page_handler()
                 if ($result) {
                     $message = __('Елемент успішно оновлено', 'myos');
                 } else {
-                    print_r($item);
                     $notice = __('Нічого не змінено', 'myos');
                 }
             }
