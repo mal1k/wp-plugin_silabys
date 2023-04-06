@@ -18,11 +18,7 @@ function myos_contacts_page_handler()
         </h2>
         <?php echo $message; ?>
 
-        <form id="contacts-table" method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>"/>
-
-            <?php $table->search_box('Поиск', 'search_id'); ?>
-            <?php
+        <?php
             $table_name = $wpdb->prefix . 'silabys'; 
             $row = $wpdb->get_results("SELECT * FROM $table_name");
             $academic_years = array();
@@ -32,6 +28,29 @@ function myos_contacts_page_handler()
 
             $academic_years = array_unique($academic_years);
             rsort($academic_years);
+
+            # Змінити стандартний рік
+            if ( isset($_REQUEST['changeCurrentYear']) )
+                update_site_option('currentYear', $_REQUEST['currentYear']);
+        ?>
+
+        <form id="currentYear" method="POST">
+            <h4 class="mb-0">Оберіть поточний рік:</h4>
+            <?php $currentYear = get_site_option('currentYear'); ?>
+            <select class="mr-3" name="currentYear" id="currentYearSelect">
+                <option value="" <?php (empty($currentYear)) ? 'selected' : ''; ?>>Академічний рік</option>
+                <?php foreach ($academic_years as $year) {
+                    $selected = ($currentYear == $year) ? 'selected' : '';
+                    echo "<option $selected value=$year>$year</option>";
+                } ?>
+            </select>
+            <?php submit_button( 'Зберегти', 'button', 'changeCurrentYear', false, array('id' => 'search-submit') ); ?>
+        </form>
+
+        <form id="contacts-table" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>"/>
+
+            <?php $table->search_box('Поиск', 'search_id');
 
             if (!empty($table->_pagination_args['total_items'])): ?>
                 <h4 class="mb-0">Фільтр:</h4>
