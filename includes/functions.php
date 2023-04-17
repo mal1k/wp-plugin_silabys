@@ -136,6 +136,9 @@ function myos_contacts_form_page_handler()
         }
 
         $item = shortcode_atts($default, $_REQUEST);
+        foreach ($item as $key => $value) {
+            $item[ stripslashes_deep($key)] = stripslashes_deep($value);
+        }
         $item_valid = myos_validate_contact($item);
 
         if ($item_valid === true) {

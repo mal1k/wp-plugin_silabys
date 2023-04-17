@@ -253,7 +253,7 @@ class Custom_Table_Silabys_List_Table extends WP_List_Table
         $search = $_REQUEST['s'];
 
         if ( !empty($search) )
-            $filters[] = "title = '$search' OR title = '$search' OR file_name = '$search' OR academic_year = '$search' OR direction = '$search' OR course = '$search'";
+            $filters[] = "title LIKE '%$search%' OR title LIKE '%$search%' OR file_name LIKE '%$search%' OR academic_year LIKE '%$search%' OR direction LIKE '%$search%' OR course LIKE '%$search%'";
 
         if ( !empty($academic_year) )
             $filters[] = "academic_year = '$academic_year'";

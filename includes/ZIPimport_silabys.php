@@ -127,9 +127,7 @@ function ZIPimport_silabys() {
                             if ($index !== false) {
                                 $upload_dir = wp_upload_dir();
                                 $fileInfo = $zip->statIndex($index); // отримуємо інформацію про файл за індексом
-        
-                                if (file_exists($upload_dir['basedir'] . '/' . $fileInfo['name']))
-                                    $fileChanged[] = $fileInfo['name'];
+                                $fileInfo['name'] = $fileInfo['name'];
         
                                 $zip->extractTo($upload_dir['basedir'], $fileInfo['name']); // записуємо файл у uploads
                                 
@@ -146,13 +144,14 @@ function ZIPimport_silabys() {
                                 ];
 
                                 $silabys_info = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE 
-                                    title = '$fileName' AND
-                                    academic_year = '$year' AND
-                                    direction = '$direction' AND
-                                    course = '$course'"
+                                    title = \"".addslashes($fileName)."\" AND
+                                    academic_year = \"$year\" AND
+                                    direction = \"$direction\" AND
+                                    course = \"$course\""
                                 ), ARRAY_A); // шукаємо у бд
 
                                 if ( !empty($silabys_info) ) {
+                                    $fileChanged[] = $fileInfo['name'];
                                     $silabys_id = $silabys_info['id'];
                                     $wpdb->update($table_name, $item, array('id' => $silabys_id));
                                 }
